@@ -9,7 +9,7 @@ srand;
 print "Welcome to hangman!\n";
 
 #Opens the file for reading
-my $dictionary = "testDictionary.txt";
+my $dictionary = "dictionary.txt";
 open(my $fd, "<", $dictionary)
 	or die "Can't open ", $dictionary;
 my $word = "Default Value"; #default value is two words, impossible in a dictionary
@@ -21,18 +21,13 @@ my $counter = 0;
 my $fdInit = $fd;
 #gets the word on the random line from the file
 while(my $line = <$fd>){
-	#print "in loop";
 	chomp $line;
-	print $line;
-	print "\n";
 	$theDictionary{$counter} = $line;
 	$counter = $counter + 1;
 }
-print "counter is: ", $counter;
 my $random = int(rand($counter));
-print "random is: ", $random;
 $word = $theDictionary{$random};
-#$word = "test";
+
 $word = lc $word;
 print "secret word is: ", $word, "\n";
 
@@ -53,11 +48,9 @@ for (my $var = 0; $var < scalar @wordArray; $var++) {
 		$theWord[$var] = "_ ";
 		$usFound[$var] = 0;
 	}
-#print "length: ", $len;
+
 
 #this loop runs the game itself
-#print "usFound: ", join("", @usFound), "\n";
-#print "incoming parameter: ", scalar @theWord, "\n";
 while ($win != scalar @theWord){
 	print join("", @theWord);
 	print "\n";
@@ -68,6 +61,17 @@ while ($win != scalar @theWord){
 	my $guess = <STDIN>;
 	chomp($guess);
 	$guess = lc $guess;
+	if(length $guess != 1){
+		my $len = length $guess;
+		while ($len != 1) {
+			print "Invalid input.  Try again.\n";
+			print "Guess a letter!";
+			$guess = <STDIN>;
+			chomp($guess);
+			$guess = lc $guess;
+			$len = length $guess;
+		}
+	}
 	for (my $j = 0; $j < scalar @guessed; $j++) {
 			if($guessed[$j] eq $guess){
 				$hasBeenGuessed = 0;
@@ -76,8 +80,6 @@ while ($win != scalar @theWord){
 		}
 	if ($hasBeenGuessed == 1){
 		for (my $i = 0; $i < scalar @wordArray; $i++) {
-			#print "current letter: ", @wordArray[$i], "\n";
-			# print "hasBeenGuessed "
 			if (($guess eq $wordArray[$i]) and ($hasBeenGuessed == 1)) {
 				$theWord[$i] = $guess;
 				$usFound[$i] = 1;
@@ -90,7 +92,6 @@ while ($win != scalar @theWord){
 	if($hasBeenFound == 1){
 		$misses = $misses + 1;
 	}
-	print "misses: ", $misses, "\n";
 	switch($misses){
 		case 1{
 			my $picture = `cat step1.txt`;
@@ -110,7 +111,6 @@ while ($win != scalar @theWord){
 	}
 	$hasBeenGuessed = 1;
 	$hasBeenFound = 1;
-	#print "win value: ", $win, "\n";
 }
 
 print "You win!!!\n";
