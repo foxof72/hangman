@@ -112,4 +112,5 @@ while ($win != scalar @theWord){
 	$hasBeenFound = 1;
 	#print "win value: ", $win, "\n";
 }
-print "You win!!!";
+
+print "You win!!!\n";
