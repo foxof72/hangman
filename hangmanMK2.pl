@@ -4,7 +4,10 @@ use 5.010;
 use Switch;
 srand;
 
-# need sudo cpan install Switch pacakge to use switch
+#IMPORTANT!!!!
+# you need the switch package for this code.
+# before running this program:
+# sudo cpan install Switch 
 
 print "Welcome to hangman!\n";
 
@@ -14,10 +17,9 @@ open(my $fd, "<", $dictionary)
 	or die "Can't open ", $dictionary;
 my $word = "Default Value"; #default value is two words, impossible in a dictionary
 
-my %theDictionary;
+my %theDictionary; # hash table that holds the dictionary
 
-#gets a random line to retrieve the word from
-my $counter = 0;
+my $counter = 0; #used to set key values in the hash.
 my $fdInit = $fd;
 #gets the word on the random line from the file
 while(my $line = <$fd>){
@@ -28,6 +30,7 @@ while(my $line = <$fd>){
 my $random = int(rand($counter));
 $word = $theDictionary{$random};
 
+#puts word into lower case
 $word = lc $word;
 print "secret word is: ", $word, "\n";
 
@@ -38,12 +41,12 @@ my @wordArray = split("", $word);
 # play the game
 my $hasBeenGuessed = 1; #flag for checking if the character has been guessed already, defaulting to false (1)
 my $hasBeenFound = 1; #flag for checking if the character has been found, meaning nothing gets added to the stick man, defaulting to false (1)
-my $win = 0;
+my $win = 0; #checks your progress towards winning
 my @guessed;  #the values that have been guessed so far 
 my @theWord; #this is the word as it is being guessed
 my $misses = 0; #number of incorrect guesses
 my @usFound; #this is an array that tracks your progress
-# this loop sets arrays needed to play
+# this loop sets up arrays needed to play
 for (my $var = 0; $var < scalar @wordArray; $var++) {
 		$theWord[$var] = "_ ";
 		$usFound[$var] = 0;
