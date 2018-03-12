@@ -9,6 +9,12 @@ srand;
 # before running this program:
 # sudo cpan install Switch 
 
+# Currently compatiable with:
+# Darwin (macOS), linux, win32
+
+# Probably not compatiable with:
+# win64, others not listed
+
 my $macFlag = ""; #used to add context to the darwin OS
 print "Welcome to hangman!\n";
 if($^O eq "darwin"){
