@@ -9,8 +9,14 @@ srand;
 # before running this program:
 # sudo cpan install Switch 
 
+my $macFlag = ""; #used to add context to the darwin OS
 print "Welcome to hangman!\n";
-
+if($^O eq "darwin"){
+	$macFlag = " (macOS)\n";
+}
+print "Currently running on: ";
+print "$^O";
+print $macFlag;
 #Opens the file for reading
 my $dictionary = "dictionary.txt";
 open(my $fd, "<", $dictionary)
@@ -95,22 +101,42 @@ while ($win != scalar @theWord){
 	if($hasBeenFound == 1){
 		$misses = $misses + 1;
 	}
-	switch($misses){
+
+	if($^O eq "MSWin32"){
 		case 1{
-			my $picture = `cat step1.txt`;
+			my $picture = `type step1.txt`;
 			print $picture, "\n";}
-		case 2{my $picture = `cat step2.txt`;
+		case 2{my $picture = `type step2.txt`;
 			print $picture, "\n";}
-		case 3{my $picture = `cat step3.txt`;
+		case 3{my $picture = `type step3.txt`;
 			print $picture, "\n";}
-		case 4{my $picture = `cat step4.txt`;
+		case 4{my $picture = `type step4.txt`;
 			print $picture, "\n";}
-		case 5{my $picture = `cat step5.txt`;
+		case 5{my $picture = `type step5.txt`;
 			print $picture, "\n";}
-		case 6{my $picture = `cat step6.txt`;
+		case 6{my $picture = `type step6.txt`;
 			print $picture, "\n";
 			print "You lose!\n";
 			exit;}
+	}
+	if(($^O eq "darwin") or ($^O eq "linux")){
+		switch($misses){
+			case 1{
+				my $picture = `cat step1.txt`;
+				print $picture, "\n";}
+			case 2{my $picture = `cat step2.txt`;
+				print $picture, "\n";}
+			case 3{my $picture = `cat step3.txt`;
+				print $picture, "\n";}
+			case 4{my $picture = `cat step4.txt`;
+				print $picture, "\n";}
+			case 5{my $picture = `cat step5.txt`;
+				print $picture, "\n";}
+			case 6{my $picture = `cat step6.txt`;
+				print $picture, "\n";
+				print "You lose!\n";
+				exit;}
+		}
 	}
 	$hasBeenGuessed = 1;
 	$hasBeenFound = 1;
