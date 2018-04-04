@@ -27,7 +27,7 @@ for my $status ( @$dms ) {
 my $text;
 my @statusText = ();
 my $j = 0;
-my $tweets = $bot->user_timeline({screen_name => "notjohnwill", count => 100, exclude_replies => 1, include_rts => 0});
+my $tweets = $bot->user_timeline({screen_name => "notjohnwill", count => 100, exclude_replies => 1, include_rts => 1});
 for my $tweetOut ( @$tweets ) {
     $text = "$tweetOut->{text}\n";
     $statusText[$j] = $text;
@@ -42,7 +42,7 @@ foreach (@statusText) {
 }
 
 #process status text by removing puncation and similar things
-my @puncation = (".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".");
+my @puncation = (".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".", ":");
 my @words = split ' ',   $stringTotal;
 for (my $var = 0; $var < scalar(@words); $var++) {
     my $current = $words[$var];
@@ -68,7 +68,7 @@ while(my $line = <$fd>){
 my %cloud; # hash of words to be used
 my $counter = 0; # how often is a word found
 foreach (@words){  # add every word to the hash, except noted stop words
-    if(exists($stopWords{lc($_)})) {
+    if((exists($stopWords{lc($_)})) or ((index($_, "https:/tco")) != -1)) {
         next;  # if its a stop word, don't add it 
     }
 	$cloud{$_} = $counter;
