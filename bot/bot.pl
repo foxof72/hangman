@@ -12,6 +12,7 @@ my $bot = Twitter::API->new_with_traits(
         access_token        => $keys::access_token,
         access_token_secret => $keys::access_token_secret,
     );
+
 # gets DMs
 my $temp;
 my @output = ();
@@ -22,13 +23,11 @@ for my $status ( @$dms ) {
     $output[$i] = $temp;
 }
 
-# print @output;
-
 # gets words for wordcloud
 my $text;
 my @statusText = ();
 my $j = 0;
-my $tweets = $bot->user_timeline({screen_name => "DailyKerouac", count => 5, exclude_replies => 1, include_rts => 0});
+my $tweets = $bot->user_timeline({screen_name => "dailykerouac", count => 10, exclude_replies => 1, include_rts => 0});
 for my $tweetOut ( @$tweets ) {
     $text = "$tweetOut->{text}\n";
     $statusText[$j] = $text;
@@ -37,38 +36,52 @@ for my $tweetOut ( @$tweets ) {
 
 #"flatten" all the tweets into one string
 my $stringTotal = "";
-foreach (@statusText) {
-  $stringTotal .= $_
+foreach (@statusText) {  
+    chomp $_;
+    $stringTotal .= $_
 }
-# print "string: ", $stringTotal;
 
 #process status text by removing puncation and similar things
-my @puncation = (".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s");
+my @puncation = (".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".");
 my @words = split ' ',   $stringTotal;
 for (my $var = 0; $var < scalar(@words); $var++) {
     my $current = $words[$var];
-    print "before current: ", $current, "\n";
     for (my $j = 0; $j < scalar(@puncation); $j++) {
-        if(index($current, $puncation[$j]) != 1){
+        if(index($current, $puncation[$j]) != -1){
             substr($current, index( $current, $puncation[$j] ), 1, "");
-            # $current =~ s/$puncation[$j]//;
         }
     }
-    print "after current: ", $current, "\n";
-    $words[$var] = $current;
+    $words[$var] = lc($current);
 }
 
 # assemble the hash of the words
 # Key: the word
 # Value: how often it appears
-my %cloud;
-my $counter = 0;
-foreach (@words){  # add every word to the hash
+my $wordsFile = "stopWords.txt";
+open(my $fd, "<", $wordsFile)
+    or die "Can't open ", $wordsFile;
+my %stopWords;
+while(my $line = <$fd>){
+    chomp $line;
+    $stopWords{$line} = 0;
+}
+my %cloud; # hash of words to be used
+my $counter = 0; # how often is a word found
+foreach (@words){  # add every word to the hash, except noted stop words
+    if(exists($stopWords{lc($_)})) {
+        next;  # if its a stop word, don't add it 
+    }
 	$cloud{$_} = $counter;
 }
+
+#populate the value field with how often the word occurs
 foreach (@words){ # incremente the hash properly
-	$cloud{$_}++;
+    if(exists($cloud{lc($_)})) {
+        $cloud{$_}++;
+    }
 }
+
+#sort the hash and print the top 5 words
 foreach my $name (sort { $cloud{$b} <=> $cloud{$a} } keys %cloud) { #sort the hash
-    # printf "%-8s %s\n", $name, $cloud{$name};
+   printf "%-8s %s\n", $name, $cloud{$name};
 }
