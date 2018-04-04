@@ -27,7 +27,7 @@ for my $status ( @$dms ) {
 my $text;
 my @statusText = ();
 my $j = 0;
-my $tweets = $bot->user_timeline({screen_name => "dailykerouac", count => 10, exclude_replies => 1, include_rts => 0});
+my $tweets = $bot->user_timeline({screen_name => "notjohnwill", count => 100, exclude_replies => 1, include_rts => 0});
 for my $tweetOut ( @$tweets ) {
     $text = "$tweetOut->{text}\n";
     $statusText[$j] = $text;
@@ -82,6 +82,11 @@ foreach (@words){ # incremente the hash properly
 }
 
 #sort the hash and print the top 5 words
+my $printCount = 0;
 foreach my $name (sort { $cloud{$b} <=> $cloud{$a} } keys %cloud) { #sort the hash
-   printf "%-8s %s\n", $name, $cloud{$name};
+    if($printCount == 5){
+        last;
+    }
+    printf "%-8s %s\n", $name, $cloud{$name};
+    $printCount++;
 }
