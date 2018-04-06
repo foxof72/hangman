@@ -16,11 +16,12 @@ my $bot = Twitter::API->new_with_traits(
 # gets DMs
 my @textArray = ();
 my @idArray = ();
+my @senderArray = ();
 my $outerI = 0;
-my $dms = $bot->direct_messages();
+my $dms = $bot->mentions();
 for my $status ( @$dms ) {
     $idArray[$outerI] = "$status->{id}";
-    $senderArray[$outerI] = "$status->{sender_screen_name}";
+    $senderArray[$outerI] = "$status->{screen_name}";
 }
 
 my $oldestID = $idArray[$outerI];
@@ -31,13 +32,19 @@ while(1){
     my @textArray = ();
     my @idArray = ();
     my @senderArray = ();
-    my $dms = $bot->direct_messages();
+    my $i = 0;
+    my $dms = $bot->mentions();
     for my $status ( @$dms ) {
         $textArray[$i] = "$status->{text}";
         $idArray[$i] = "$status->{id}";
-        $senderArray[$i] = "$status->{sender_screen_name}";
+        $senderArray[$i] = "$status->{user->screen_name}";
+        $i++;
     }
-    if (($oldestID == $idArray[$i]) and ($oldestScreen eq $senderArray[$i])) {
+    print "ids: ", @idArray, "\n";
+    # print "ids: ", $idArray[1], "\n";
+    print "senderArray: ", @senderArray, "\n";
+    last;
+    if (($oldestID != $idArray[0]) and ($oldestScreen eq $senderArray[0])) {
         # gets words for wordcloud
         my $text;
         my @statusText = ();
