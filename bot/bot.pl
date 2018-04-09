@@ -21,7 +21,7 @@ my $outerI = 0;
 my $dms = $bot->mentions();
 for my $status ( @$dms ) {
     $idArray[$outerI] = "$status->{id}";
-    $senderArray[$outerI] = "$status->{screen_name}";
+    $senderArray[$outerI] = "$status->{user}{screen_name}";
 }
 
 my $oldestID = $idArray[$outerI];
@@ -37,19 +37,20 @@ while(1){
     for my $status ( @$dms ) {
         $textArray[$i] = "$status->{text}";
         $idArray[$i] = "$status->{id}";
-        $senderArray[$i] = "$status->{user->screen_name}";
+        $senderArray[$i] = "$status->{user}{screen_name}";
         $i++;
     }
     print "ids: ", @idArray, "\n";
     # print "ids: ", $idArray[1], "\n";
     print "senderArray: ", @senderArray, "\n";
     last;
-    if (($oldestID != $idArray[0]) and ($oldestScreen eq $senderArray[0])) {
+    my $idCounter = 0;
+    while($oldestID != $idArray[$idCounter]){
         # gets words for wordcloud
         my $text;
         my @statusText = ();
         my $j = 0;
-        my $tweets = $bot->user_timeline({screen_name => "notjohnwill", count => 100, exclude_replies => 1, include_rts => 1});
+        my $tweets = $bot->user_timeline({screen_name => $senderArray[$idCounter], count => 100, exclude_replies => 1, include_rts => 1});
         for my $tweetOut ( @$tweets ) {
             $text = "$tweetOut->{text}\n";
             $statusText[$j] = $text;
@@ -104,13 +105,23 @@ while(1){
         }
 
         #sort the hash and print the top 5 words
+        my $tweetText = $senderArray[$idCounter];
+        $tweetText .=  " 5 most used words are: \n";
         my $printCount = 0;
         foreach my $name (sort { $cloud{$b} <=> $cloud{$a} } keys %cloud) { #sort the hash
             if($printCount == 5){
                 last;
             }
-            printf "%-8s %s\n", $name, $cloud{$name};
+            $tweetText .= $printCount; 
+            $tweetText .= ". "; #the number and a dot for looking nice
+            $tweetText .= $name;  
+            $tweetText .= " ";
+            $tweetText .= $cloud{$name}; #the word and its uses
+            $tweetText .= "\n"; #new line at the end
+            # printf "%-8s %s\n", $name, $cloud{$name};
             $printCount++;
         }
+        $bot->update($tweetText, {in_reply_to_status_id => $idArray[$idCounter]});
     }
+    sleep(12);
 }
