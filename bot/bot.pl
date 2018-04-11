@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 use Twitter::API;
 use keys;
 use strict;
