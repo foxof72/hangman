@@ -34,6 +34,7 @@ my $oldestID = -1; # will never be this, ensuring it will act on the first tweet
 #the main body of the bot, runs forever cause the bot never goes down
 my $datestring = localtime();
 print $fh "Log opened at $datestring\n\n";
+print "Bot is live! Check $logName for log.\n";
 while(1){
     # gets DMs
     my @textArray = ();
@@ -71,7 +72,7 @@ while(1){
             }
 
             #process status text by removing puncation and similar things
-            my @puncation = (".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".", ":");
+            my @puncation = ("@", ".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".", ":", "-");
             my @words = split ' ',   $stringTotal;
             for (my $var = 0; $var < scalar(@words); $var++) {
                 my $current = $words[$var];
