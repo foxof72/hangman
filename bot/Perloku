@@ -1,0 +1,2 @@
+#!/bin/sh
+./bot.pl daemon --listen http://*:$PORT
