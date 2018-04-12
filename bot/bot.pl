@@ -1,4 +1,7 @@
 #!/usr/bin/env perl
+
+# link for building:
+# https://elements.heroku.com/buildpacks/judofyr/perloku
 use Twitter::API;
 use keys;
 use strict;
