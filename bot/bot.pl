@@ -21,18 +21,9 @@ my $logName = 'log.txt';
 open(my $fh, '>', $logName)
     or die "cannot open file $logName"; # log file
 select $fh; $| = 1; select STDOUT;
-# gets DMs
-#my @textArray = ();
-#my @idArray = ();
-#my @senderArray = ();
-#my $outerI = 0;
-#my $dms = $bot->mentions();
-#for my $status ( @$dms ) {
-#    $idArray[$outerI] = "$status->{id}";
-#    $senderArray[$outerI] = "$status->{user}{screen_name}";
-#}
-
-my $oldestID = -1; # will never be this, ensuring it will act on the first tweet
+my $idFile = 'ids.txt';
+open(my $idFH, '+<', $idFile)
+    or die "cannot open file $idFile"; # id file
 #my $oldestScreen = $senderArray[$outerI];
 
 #the main body of the bot, runs forever cause the bot never goes down
@@ -41,11 +32,18 @@ print $fh "Log opened at $datestring\n\n";
 print "Bot is live! Check $logName for log.\n";
 while(1){
     # gets DMs
+    print "Top of the loop!\n";
     my @textArray = ();
     my @idArray = ();
     my @senderArray = ();
     my $i = 0;
-    my $dms = $bot->mentions();
+    while (my $row = <$idFH>) {
+        chomp $row;
+        print "id: $row\n";
+        my $oldestID = $row;
+    }
+    seek $idFH, 0, 0; # go back to the start of the file
+    my $dms = $bot->mentions({since_id => $oldestID});
     for my $status ( @$dms ) {
         $textArray[$i] = "$status->{text}";
         $idArray[$i] = "$status->{id}";
@@ -55,9 +53,15 @@ while(1){
     # print "ids: ", @idArray, "\n";
     # print "senderArray: ", @senderArray, "\n";
     my $idCounter = 0;
+    my $previousTweet;
     if($i != 0){
-        while($oldestID != $idArray[$idCounter]){
+        $previousTweet = 0;
+        while($i != $idCounter){
             # gets words for wordcloud
+            print "id is $idCounter \n";
+            print "i is $i \n";
+            print "oldestID is: ", $oldestID, "\n";
+            print "idArray is: ", $idArray[$idCounter], "\n";
             my $text;
             my @statusText = ();
             my $j = 0;
@@ -76,7 +80,7 @@ while(1){
             }
 
             #process status text by removing puncation and similar things
-            my @puncation = ("@", ".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".", ":", "-");
+            my @puncation = ("@", "don't", ".", "/", "...", "{", "}", "(", ")", "!", "?", ",", "\"", "\'s", "..", "....", ".", ":", "-", " ", "\n");
             my @words = split ' ',   $stringTotal;
             for (my $var = 0; $var < scalar(@words); $var++) {
                 my $current = $words[$var];
@@ -102,7 +106,7 @@ while(1){
             my %cloud; # hash of words to be used
             my $counter = 0; # how often is a word found
             foreach (@words){  # add every word to the hash, except noted stop words
-                if((exists($stopWords{lc($_)})) or ((index($_, "https:/tco")) != -1)) {
+                if((exists($stopWords{lc($_)})) or ((index($_, "https:/tco")) != -1) or ($_ eq "don't")) {
                     next;  # if its a stop word, don't add it 
                 }
             	$cloud{$_} = $counter;
@@ -110,7 +114,7 @@ while(1){
 
             #populate the value field with how often the word occurs
             foreach (@words){ # incremente the hash properly
-                if(exists($cloud{lc($_)})) {
+                if((exists($cloud{lc($_)})) and ($cloud{lc($_)} ne "don't")) {
                     $cloud{$_}++;
                 }
             }
@@ -138,6 +142,11 @@ while(1){
             $datestring = localtime();
             print $fh "Tweeted $tweetText at $datestring\n\n";
             $oldestID = $idArray[$idCounter];
+            my $line = <$idFH>;
+            $line = $idArray[$idCounter];
+            seek $idFH, 0, 0; # go back to the start of the file
+            printf $idFH $line;
+            $idCounter++;
         }
     }
     $datestring = localtime();
