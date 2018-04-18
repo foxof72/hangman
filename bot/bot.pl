@@ -30,6 +30,7 @@ open(my $idFH, '+<', $idFile)
 my $datestring = localtime();
 print $fh "Log opened at $datestring\n\n";
 print "Bot is live! Check $logName for log.\n";
+my $oldestID = -1;
 while(1){
     # gets DMs
     print "Top of the loop!\n";
@@ -39,16 +40,46 @@ while(1){
     my $i = 0;
     while (my $row = <$idFH>) {
         chomp $row;
-        print "id: $row\n";
-        my $oldestID = $row;
+        # print "id: $row\n";
+        $oldestID = $row;
     }
     seek $idFH, 0, 0; # go back to the start of the file
+    print $fh "ID: $oldestID\n";
     my $dms = $bot->mentions({since_id => $oldestID});
+    my $userName = "themetricbot";
     for my $status ( @$dms ) {
-        $textArray[$i] = "$status->{text}";
-        $idArray[$i] = "$status->{id}";
-        $senderArray[$i] = "$status->{user}{screen_name}";
-        $i++;
+        my $textToCheck = lc("$status->{text}");
+        chomp $textToCheck;
+        # print "tweet text: $textToCheck\n";
+        #  index($textToCheck, $userName);
+        if ((length($textToCheck) == 13) and (index($textToCheck, $userName) == 1))  {
+            $textArray[$i] = "$status->{text}";
+            $idArray[$i] = "$status->{id}";
+            print $fh "Added id with $idArray[$i] to array\n";
+            $senderArray[$i] = "$status->{user}{screen_name}";
+            $i++;
+        } else {
+            if(index($textToCheck, " ") != -1){
+                my @tweetDecider = split ' ',   $textToCheck;
+                # print "array: @tweetDecider\n";
+                my $lengthOfDecider = scalar(@tweetDecider);
+                # print "$lengthOfDecider\n";
+                # print $tweetDecider[$lengthOfDecider-1], "\n";
+                #if (((length($textToCheck) == 13) and (index($textToCheck, $userName) != -1))) 
+                if(index($tweetDecider[$lengthOfDecider-1], $userName) != -1){
+                    $textArray[$i] = "$status->{text}";
+                    $idArray[$i] = "$status->{id}";
+                    print $fh "Added id with $idArray[$i] to array\n";
+                    $senderArray[$i] = "$status->{user}{screen_name}";
+                    $i++;
+                }
+            }
+        }
+        my $line = <$idFH>;
+        $line = "$status->{id}";
+        print "new id in file is $line";
+        seek $idFH, 0, 0; # go back to the start of the file
+        printf $idFH $line;
     }
     # print "ids: ", @idArray, "\n";
     # print "senderArray: ", @senderArray, "\n";
@@ -58,10 +89,10 @@ while(1){
         $previousTweet = 0;
         while($i != $idCounter){
             # gets words for wordcloud
-            print "id is $idCounter \n";
-            print "i is $i \n";
-            print "oldestID is: ", $oldestID, "\n";
-            print "idArray is: ", $idArray[$idCounter], "\n";
+            # print "id is $idCounter \n";
+            # print "i is $i \n";
+            #print "oldestID is: ", $oldestID, "\n";
+            #print "idArray is: ", $idArray[$idCounter], "\n";
             my $text;
             my @statusText = ();
             my $j = 0;
@@ -141,16 +172,18 @@ while(1){
             $bot->update($tweetText, {in_reply_to_status_id => $idArray[$idCounter]});
             $datestring = localtime();
             print $fh "Tweeted $tweetText at $datestring\n\n";
+            print "tweeting...\n";
             $oldestID = $idArray[$idCounter];
             my $line = <$idFH>;
             $line = $idArray[$idCounter];
+            print "new id in file is $line";
             seek $idFH, 0, 0; # go back to the start of the file
             printf $idFH $line;
             $idCounter++;
         }
     }
     $datestring = localtime();
-    print $fh "No new tweets at $datestring, sleeping for 11 seconds\n\n";
+    print "No new tweets at $datestring, sleeping for 11 seconds\n\n";
     sleep(11);
 }
 close $fh;

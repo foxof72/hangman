@@ -1,1 +1,1 @@
-requires 'Twitter::API', '0.0109';
+requires 'Twitter::API', '1.0001';
