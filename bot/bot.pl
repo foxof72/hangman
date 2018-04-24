@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
-# link for building:
-# https://elements.heroku.com/buildpacks/judofyr/perloku
+# John Williams
+# Anthony Green
 use Twitter::API;
 use keys;
 use strict;
@@ -9,6 +9,7 @@ use warnings;
 
 #Initalizing the bot
 #THESE MUST BE FILLED IN PRIOR TO RUNTIME AND KEPT MEGA SECRET
+#MUST BE ON PUBLIC PRIVACY SETTING FOR THIS TO WORK
 my $bot = Twitter::API->new_with_traits(
         traits              => 'Enchilada',
         consumer_key        => $keys::consumer_key,
@@ -32,41 +33,35 @@ print $fh "Log opened at $datestring\n\n";
 print "Bot is live! Check $logName for log.\n";
 my $oldestID = -1;
 while(1){
-    # gets DMs
-    print "Top of the loop!\n";
+    # gets mentions
     my @textArray = ();
     my @idArray = ();
     my @senderArray = ();
     my $i = 0;
     while (my $row = <$idFH>) {
         chomp $row;
-        # print "id: $row\n";
-        $oldestID = $row;
+        $oldestID = $row;  #get the id from the file
     }
     seek $idFH, 0, 0; # go back to the start of the file
     print $fh "ID: $oldestID\n";
     my $dms = $bot->mentions({since_id => $oldestID});
     my $userName = "themetricbot";
     for my $status ( @$dms ) {
-        my $textToCheck = lc("$status->{text}");
+        my $textToCheck = lc("$status->{text}");  # create the array of tweets
         chomp $textToCheck;
-        # print "tweet text: $textToCheck\n";
-        #  index($textToCheck, $userName);
-        if ((length($textToCheck) == 13) and (index($textToCheck, $userName) == 1))  {
+        if ((length($textToCheck) == 13) and (index($textToCheck, $userName) == 1))  { # check that the tweet contains the bot's name and nothing else if this is a standalone tweet
+            # create arrays to hold the data from the tweets
             $textArray[$i] = "$status->{text}";
             $idArray[$i] = "$status->{id}";
             print $fh "Added id with $idArray[$i] to array\n";
             $senderArray[$i] = "$status->{user}{screen_name}";
             $i++;
         } else {
-            if(index($textToCheck, " ") != -1){
+            if(index($textToCheck, " ") != -1){  # check that the tweet contains the bots name and nothing else if this is a response to another tweet
                 my @tweetDecider = split ' ',   $textToCheck;
-                # print "array: @tweetDecider\n";
                 my $lengthOfDecider = scalar(@tweetDecider);
-                # print "$lengthOfDecider\n";
-                # print $tweetDecider[$lengthOfDecider-1], "\n";
-                #if (((length($textToCheck) == 13) and (index($textToCheck, $userName) != -1))) 
                 if(index($tweetDecider[$lengthOfDecider-1], $userName) != -1){
+                    # create arrays to hold the data from the tweets
                     $textArray[$i] = "$status->{text}";
                     $idArray[$i] = "$status->{id}";
                     print $fh "Added id with $idArray[$i] to array\n";
@@ -77,33 +72,26 @@ while(1){
         }
         my $line = <$idFH>;
         $line = "$status->{id}";
-        print "new id in file is $line";
+        print $fh "new id in file is $line\n";
         seek $idFH, 0, 0; # go back to the start of the file
         printf $idFH $line;
     }
-    # print "ids: ", @idArray, "\n";
-    # print "senderArray: ", @senderArray, "\n";
     my $idCounter = 0;
-    my $previousTweet;
-    if($i != 0){
-        $previousTweet = 0;
+    if($i != 0){ # do not do this loop if there are no tweets to process
         while($i != $idCounter){
             # gets words for wordcloud
-            # print "id is $idCounter \n";
-            # print "i is $i \n";
-            #print "oldestID is: ", $oldestID, "\n";
-            #print "idArray is: ", $idArray[$idCounter], "\n";
             my $text;
             my @statusText = ();
             my $j = 0;
             my $tweets = $bot->user_timeline({screen_name => $senderArray[$idCounter], count => 100, exclude_replies => 1, include_rts => 1});
             for my $tweetOut ( @$tweets ) {
+                # gets the users tweet text to process
                 $text = "$tweetOut->{text}\n";
                 $statusText[$j] = $text;
                 $j++;
             }
 
-            #"flatten" all the tweets into one string
+            #"flatten" all the tweet texts into one string
             my $stringTotal = "";
             foreach (@statusText) {  
                 chomp $_;
@@ -137,7 +125,7 @@ while(1){
             my %cloud; # hash of words to be used
             my $counter = 0; # how often is a word found
             foreach (@words){  # add every word to the hash, except noted stop words
-                if((exists($stopWords{lc($_)})) or ((index($_, "https:/tco")) != -1) or ($_ eq "don't")) {
+                if((exists($stopWords{lc($_)})) or ((index($_, "https:/tco")) != -1) or ($_ eq "don't") or ($_ eq " ") or (exists($cloud{lc($_)}))) { # do not add the word if it isn't allowed
                     next;  # if its a stop word, don't add it 
                 }
             	$cloud{$_} = $counter;
@@ -151,7 +139,7 @@ while(1){
             }
 
             #sort the hash and print the top 5 words
-            my $tweetText = '@';
+            my $tweetText = '@'; # the text of the response tweet
             $tweetText .= $senderArray[$idCounter];
             $tweetText .=  " 5 most used words are: \n";
             my $printCount = 0;
@@ -165,10 +153,8 @@ while(1){
                 $tweetText .= " ";
                 $tweetText .= $cloud{$name}; #the word and its uses
                 $tweetText .= "\n"; #new line at the end
-                # printf "%-8s %s\n", $name, $cloud{$name};
                 $printCount++;
             }
-            # print "The tweet text: ", $tweetText, "\n";
             $bot->update($tweetText, {in_reply_to_status_id => $idArray[$idCounter]});
             $datestring = localtime();
             print $fh "Tweeted $tweetText at $datestring\n\n";
@@ -176,14 +162,16 @@ while(1){
             $oldestID = $idArray[$idCounter];
             my $line = <$idFH>;
             $line = $idArray[$idCounter];
-            print "new id in file is $line";
+            print $fh "new id in file is $line\n";
             seek $idFH, 0, 0; # go back to the start of the file
             printf $idFH $line;
             $idCounter++;
         }
     }
     $datestring = localtime();
-    print "No new tweets at $datestring, sleeping for 11 seconds\n\n";
-    sleep(11);
+    print $fh "No new tweets at $datestring, sleeping for 11 seconds\n\n";
+    sleep(11); # sleep if there are no new tweets to prevent spamming twitter's servers
 }
+# close files
+close $idFH;
 close $fh;
